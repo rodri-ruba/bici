@@ -18,6 +18,7 @@ export default function Home() {
   const [cargando, setCargando] = useState(true);
   const [amigos, setAmigos] = useState<any[]>([]);
   const [eventos, setEventos] = useState<any[]>([]);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
 
   const [usuarioParaSOS, setUsuarioParaSOS] = useState<any>(null);
 
@@ -63,97 +64,93 @@ export default function Home() {
     }
   };
 
-  // Función para sumar rodada (necesaria para la vista de miembros)
-  const sumarRodada = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "usuarios", id), { rodadasCount: increment(1) });
-      refrescarTodo();
-    } catch (e) { console.error(e); }
-  };
-
   useEffect(() => {
     const sesion = localStorage.getItem('usuarioLogueado');
     if (sesion) { setUsuarioActual(JSON.parse(sesion)); refrescarTodo(); }
     setCargando(false);
   }, [refrescarTodo]);
 
-  if (cargando) return <div className="min-h-screen bg-black flex items-center justify-center font-black text-orange-500 italic uppercase">Cargando Sufrimiento...</div>;
+  if (cargando) return <div className="min-h-screen bg-[#F3F3FC] flex items-center justify-center font-bold text-[#8CAACF] animate-pulse">Cargando Sufrimiento...</div>;
   if (!usuarioActual) return <LoginScreen />;
 
   const esAdmin = usuarioActual?.role?.trim().toLowerCase() === 'admin';
 
+  const navegarA = (nuevaVista: string) => {
+    setVista(nuevaVista);
+    setEditandoPerfil(false);
+    setMenuMovilAbierto(false);
+  };
+
   return (
-    <main className="bg-gray-50 min-h-screen pb-20">
+    <main className="bg-[#F3F3FC] min-h-screen pb-20 font-['Roboto',sans-serif]">
       {/* NAVBAR */}
-      <nav className={`sticky top-0 z-50 border-b-2 border-orange-500 ${esAdmin ? 'bg-slate-950 text-white' : 'bg-white text-black'}`}>
-        <div className="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
-          {/* LOGO Y USUARIO CON INSIGNIA DE RANGO */}
-<div 
-  className="flex items-center gap-3 cursor-pointer group" 
-  onClick={() => {setVista('cartelera'); setEditandoPerfil(false);}}
->
-  <div className="relative">
-    <img 
-      src="/logo.png" 
-      className="w-10 h-10 rounded-full border-2 border-orange-500 bg-black shadow-sm group-hover:scale-110 transition-transform" 
-      alt="CR&L" 
-    />
-    
-    {/* BADGE DE RANGO (REEMPLAZA AL AD) */}
-    {(() => {
-      const conteo = usuarioActual?.rodadasCount || 0;
-      let insignia = "👶"; // Recluta
-      let bgBadge = "bg-gray-400";
+      <nav className={`sticky top-0 z-50 border-b border-gray-200 ${esAdmin ? 'bg-black text-white' : 'bg-white text-black'}`}>
+        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+          
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navegarA('cartelera')}>
+            <div className="relative">
+              <img src={usuarioActual?.fotoPerfil || "/logo.png"} className="w-10 h-10 rounded-xl border border-gray-200 object-cover bg-black" alt="CR&L" />
+              <span className="absolute -top-1 -right-1 text-[8px] bg-[#8CAACF] text-white w-4 h-4 flex items-center justify-center rounded-full font-bold border border-white">
+                {usuarioActual?.rodadasCount || 0}
+              </span>
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="font-bold text-xs uppercase tracking-tight line-clamp-1">{usuarioActual?.nombre}</span>
+              <span className="text-[7px] font-bold text-[#8CAACF] uppercase tracking-widest">Pelotón CR&L</span>
+            </div>
+          </div>
 
-      if (conteo >= 50) { insignia = "👑"; bgBadge = "bg-yellow-500"; } // Leyenda
-      else if (conteo >= 25) { insignia = "🔥"; bgBadge = "bg-orange-500"; } // Líder
-      else if (conteo >= 10) { insignia = "🏔️"; bgBadge = "bg-blue-500"; } // Escalador
+          {/* MENÚ ESCRITORIO CON OPCIÓN CREAR PARA ADMIN */}
+          <div className="hidden md:flex items-center gap-6">
+            <button onClick={() => navegarA('cartelera')} className={`text-[10px] font-bold uppercase tracking-widest ${vista === 'cartelera' ? 'text-[#8CAACF]' : 'opacity-50 hover:opacity-100'}`}>Actividades</button>
+            <button onClick={() => navegarA('sociales')} className={`text-[10px] font-bold uppercase tracking-widest ${vista === 'sociales' ? 'text-[#8CAACF]' : 'opacity-50 hover:opacity-100'}`}>Sociales</button>
+            {esAdmin && (
+              <>
+                <button onClick={() => navegarA('miembros')} className={`text-[10px] font-bold uppercase tracking-widest ${vista === 'miembros' ? 'text-[#8CAACF]' : 'opacity-50 hover:opacity-100'}`}>Miembros</button>
+                <button onClick={() => navegarA('crear')} className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg border ${vista === 'crear' ? 'bg-[#8CAACF] border-[#8CAACF] text-white' : 'border-gray-500 opacity-70 hover:opacity-100'}`}>+ Nuevo</button>
+              </>
+            )}
+            <button onClick={() => navegarA('registro')} className={`text-[10px] font-bold uppercase tracking-widest ${vista === 'registro' ? 'text-[#8CAACF]' : 'opacity-50 hover:opacity-100'}`}>Perfil</button>
+            <button onClick={manejarSalida} className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-500 ml-2">Fuga</button>
+          </div>
 
-      return (
-        <span className={`absolute -top-1 -right-1 text-[10px] ${bgBadge} text-white w-5 h-5 flex items-center justify-center rounded-full font-black border border-white shadow-sm shadow-black/20 animate-in zoom-in`}>
-          {insignia}
-        </span>
-      );
-    })()}
-  </div>
-  
-  <div className="flex flex-col leading-none">
-    <span className="font-black italic text-sm uppercase tracking-tighter">
-      {usuarioActual?.nombre || 'Zuricata'}
-    </span>
-    {/* Subtítulo dinámico según rango */}
-    <span className="text-[7px] font-black text-orange-500 uppercase tracking-widest">
-      {(() => {
-        const c = usuarioActual?.rodadasCount || 0;
-        if (c >= 50) return "Leyenda Viva";
-        if (c >= 25) return "Zuricata Senior";
-        if (c >= 10) return "Ya se siente Pro";
-        return "Recluta";
-      })()}
-    </span>
-  </div>
-</div>
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button onClick={() => {setVista('cartelera'); setEditandoPerfil(false);}} className={`text-[10px] font-black uppercase italic px-3 py-2 rounded-xl transition-all ${vista === 'cartelera' ? 'bg-orange-500 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}>Sufrimiento</button>
-            <button onClick={() => {setVista('sociales'); setEditandoPerfil(false);}} className={`text-[10px] font-black uppercase italic px-3 py-2 rounded-xl transition-all ${vista === 'sociales' ? 'bg-purple-600 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}>Chisme</button>
-            {esAdmin && <button onClick={() => {setVista('miembros'); setEditandoPerfil(false);}} className={`text-[10px] font-black uppercase italic px-3 py-2 rounded-xl transition-all ${vista === 'miembros' ? 'bg-blue-600 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}>Grupeta</button>}
-            <button onClick={() => {setVista('registro'); setEditandoPerfil(false);}} className={`text-[10px] font-black uppercase italic px-3 py-2 rounded-xl transition-all ${vista === 'registro' ? 'bg-green-600 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]' : 'text-gray-400'}`}>Perfil</button>
-            <button onClick={manejarSalida} className="text-[10px] font-black uppercase italic px-3 py-2 rounded-xl text-red-500 bg-red-50">Fuga</button>
-            {esAdmin && <button onClick={() => setVista('crear')} className="bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center ml-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">+</button>}
+          <div className="flex md:hidden items-center gap-3">
+            {esAdmin && (
+              <button onClick={() => navegarA('crear')} className="bg-[#8CAACF] text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg font-light text-xl">+</button>
+            )}
+            <button onClick={() => setMenuMovilAbierto(!menuMovilAbierto)} className="text-2xl p-2">
+              {menuMovilAbierto ? '✕' : '☰'}
+            </button>
           </div>
         </div>
+
+        {menuMovilAbierto && (
+          <div className="md:hidden bg-white text-black p-8 border-t border-gray-100 flex flex-col gap-6 animate-in slide-in-from-top duration-300 shadow-xl font-['Roboto',sans-serif]">
+            <button onClick={() => navegarA('cartelera')} className={`text-left text-xl font-bold uppercase tracking-tight ${vista === 'cartelera' ? 'text-[#8CAACF]' : ''}`}>Actividades</button>
+            <button onClick={() => navegarA('sociales')} className={`text-left text-xl font-bold uppercase tracking-tight ${vista === 'sociales' ? 'text-[#8CAACF]' : ''}`}>Sociales</button>
+            {esAdmin && (
+              <>
+                <button onClick={() => navegarA('miembros')} className={`text-left text-xl font-bold uppercase tracking-tight ${vista === 'miembros' ? 'text-[#8CAACF]' : ''}`}>Miembros</button>
+                <button onClick={() => navegarA('crear')} className={`text-left text-xl font-bold uppercase tracking-tight ${vista === 'crear' ? 'text-[#8CAACF]' : ''}`}>➕ Crear Evento</button>
+              </>
+            )}
+            <button onClick={() => navegarA('registro')} className={`text-left text-xl font-bold uppercase tracking-tight ${vista === 'registro' ? 'text-[#8CAACF]' : ''}`}>👤 Mi Perfil</button>
+            <hr className="border-gray-100" />
+            <button onClick={manejarSalida} className="text-left text-xs font-bold uppercase tracking-[0.2em] text-red-400">🚪 Cerrar Sesión</button>
+          </div>
+        )}
       </nav>
 
-      <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      <div className="max-w-6xl mx-auto p-6 sm:p-10">
         {(vista === 'cartelera' || vista === 'sociales') && (
-          <div className="animate-in fade-in">
+          <div className="animate-in fade-in duration-500">
             {vista === 'cartelera' && <SeccionCumpleaños amigos={amigos} />}
-            <div className="mb-8">
-              <h1 className="text-4xl font-black italic uppercase leading-none">{vista === 'cartelera' ? 'Sufrimiento' : 'Chisme'}</h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-orange-500 mt-1">{vista === 'cartelera' ? '— Por voluntad propia' : '— Lo realmente importante'}</p>
+            <div className="mb-10">
+              <h1 className="text-4xl sm:text-5xl font-medium text-black tracking-tighter leading-none">{vista === 'cartelera' ? 'Actividades' : 'Sociales'}</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8CAACF] mt-3">{vista === 'cartelera' ? '— Sufrimiento por voluntad propia' : '— Chisme, lo realmente importante'}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {eventos.filter(ev => vista === 'cartelera' ? (ev.tipo === 'rodada' || ev.tipo === 'running') : ev.tipo === 'social').map(ev => (
                 <CardEvento key={ev.id} evento={ev} usuarioActual={usuarioActual} esAdmin={esAdmin} />
               ))}
@@ -161,206 +158,63 @@ export default function Home() {
           </div>
         )}
 
-        {/* VISTA REGISTRO / PERFIL */}
-        {/* VISTA REGISTRO / PERFIL RESTAURADA AL 100% */}
-{vista === 'registro' && (
-  <div className="max-w-xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-    {!editandoPerfil ? (
-      <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden border-4 border-black relative">
-        
-        {/* Banner de Mantenimiento / Servicio */}
-        {(() => {
-          const kmsTotales = usuarioActual?.rodadasCount * 50 || 0; // Ajusta según tu lógica de kms
-          const ultimoServicio = usuarioActual?.ultimoServicio || 0;
-          if (kmsTotales - ultimoServicio > 500) { // Ejemplo: cada 500km
-            return (
-              <div className="bg-yellow-400 text-black text-[9px] font-black uppercase italic py-2 px-4 flex justify-center items-center gap-2 border-b-2 border-black">
-                ⚠️ ¡Aviso! Tu nave requiere mantenimiento (Km: {kmsTotales})
-              </div>
-            );
-          }
-        })()}
-
-        <div className="h-32 bg-gradient-to-r from-orange-500 to-orange-600" />
-        
-        <div className="px-8 pb-8 flex flex-col items-center">
-          {/* Foto de Perfil */}
-          <div className="w-32 h-32 bg-black rounded-[40px] border-8 border-white -mt-16 shadow-xl overflow-hidden">
-            <img 
-              src={usuarioActual?.fotoPerfil || "/logo.png"} 
-              className="w-full h-full object-cover" 
-              alt="Perfil" 
-            />
-          </div>
-
-          {/* Info Básica */}
-          <h2 className="mt-4 text-3xl font-black uppercase italic leading-none text-center">
-            {usuarioActual?.nombre} {usuarioActual?.apellidos}
-          </h2>
-          
-          {/* Rango */}
-          {(() => {
-            const conteo = usuarioActual?.rodadasCount || 0;
-            let rango = "Recluta";
-            let color = "text-gray-400";
-            let meta = 10;
-            
-            if (conteo >= 50) { rango = "Leyenda del Maillot de Oro"; color = "text-yellow-500"; meta = 100; }
-            else if (conteo >= 25) { rango = "Líder del Pelotón"; color = "text-orange-500"; meta = 50; }
-            else if (conteo >= 10) { rango = "Escalador Pro"; color = "text-blue-500"; meta = 25; }
-
-            const progreso = (conteo / meta) * 100;
-
-            return (
-              <div className="w-full mt-4 flex flex-col items-center">
-                <p className={`text-xs font-black uppercase italic ${color} mb-4 tracking-widest animate-pulse`}>
-                  ⭐ {rango}
-                </p>
-                
-                {/* Barra de Progreso */}
-                <div className="w-full bg-gray-100 h-4 rounded-full border-2 border-black overflow-hidden relative">
-                  <div 
-                    className="h-full bg-orange-500 transition-all duration-1000 ease-out" 
-                    style={{ width: `${progreso}%` }}
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black uppercase">
-                    {conteo} / {meta} Actividades
-                  </span>
+        {/* VISTAS DE PERFIL, MIEMBROS Y CREAR SE MANTIENEN IGUAL A LO ACORDADO */}
+        {vista === 'registro' && (
+          <div className="max-w-xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+            {!editandoPerfil ? (
+              <div className="bg-white rounded-[32px] shadow-xl shadow-black/5 overflow-hidden border border-gray-100 relative">
+                <div className="h-28 bg-gradient-to-r from-[#8CAACF] to-[#7E8285]/20" />
+                <div className="px-8 pb-10 flex flex-col items-center">
+                  <div className="w-28 h-28 bg-white rounded-3xl border-4 border-white -mt-14 shadow-2xl overflow-hidden">
+                    <img src={usuarioActual?.fotoPerfil || "/logo.png"} className="w-full h-full object-cover" alt="Perfil" />
+                  </div>
+                  <h2 className="mt-6 text-2xl font-bold text-black tracking-tight text-center leading-none">{usuarioActual?.nombre} {usuarioActual?.apellidos}</h2>
+                  <div className="w-full mt-8">
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="bg-[#F3F3FC] p-5 rounded-2xl text-center border border-blue-50">
+                        <p className="text-[9px] font-bold text-[#7E8285] uppercase mb-1">Actividades</p>
+                        <p className="text-2xl font-bold text-black">{usuarioActual?.rodadasCount || 0}</p>
+                      </div>
+                      <div className="bg-[#F3F3FC] p-5 rounded-2xl text-center border border-blue-50 flex flex-col justify-center">
+                        <p className="text-[9px] font-bold text-[#7E8285] uppercase mb-1">Estatus</p>
+                        <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest">🔥 On Fire</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setEditandoPerfil(true)} className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-[0.2em] hover:bg-[#8CAACF] transition-all">Editar Perfil</button>
                 </div>
-                <p className="text-[8px] font-bold text-gray-400 mt-2 uppercase">Próximo nivel a las {meta} rodadas</p>
               </div>
-            );
-          })()}
-
-          {/* Estadísticas */}
-          {/* ESTADÍSTICAS Y ESTATUS CHISTOSO */}
-<div className="grid grid-cols-2 gap-3 w-full mt-8">
-  <div className="bg-gray-50 p-4 rounded-2xl border-b-4 border-gray-100 text-center">
-    <p className="text-[9px] font-black text-gray-400 uppercase leading-none">Actividades</p>
-    <p className="text-xl font-black italic">{usuarioActual?.rodadasCount || 0}</p>
-  </div>
-
-  <div className="bg-gray-50 p-4 rounded-2xl border-b-4 border-gray-100 text-center">
-    <p className="text-[9px] font-black text-gray-400 uppercase leading-none">Mood actual</p>
-    {(() => {
-      // Lógica de tiempo basada en la última inscripción
-      const ahora = new Date().getTime();
-      const ultima = usuarioActual?.ultimaInscripcion || ahora; 
-      const unaSemana = 7 * 24 * 60 * 60 * 1000;
-      const tresDias = 3 * 24 * 60 * 60 * 1000;
-      
-      const tiempoPasado = ahora - ultima;
-
-      if (tiempoPasado > unaSemana) {
-        return (
-          <div className="animate-bounce mt-1">
-            <p className="text-[10px] font-black italic text-red-500 uppercase leading-tight">👻 ¿Hay alguien ahí?</p>
+            ) : (
+              <FormularioRegistro datosIniciales={usuarioActual} onFinalizar={() => { refrescarTodo(); setEditandoPerfil(false); }} />
+            )}
           </div>
-        );
-      } else if (tiempoPasado > tresDias) {
-        return (
-          <div className="mt-1">
-            <p className="text-[10px] font-black italic text-yellow-600 uppercase leading-tight">🤨 Sospechoso</p>
-          </div>
-        );
-      }
-      return (
-        <div className="mt-1">
-          <p className="text-[10px] font-black italic text-green-500 uppercase leading-tight">🔥 On Fire</p>
-        </div>
-      );
-    })()}
-  </div>
-</div>
+        )}
 
-          {/* Botón Actualizar */}
-          <button 
-            onClick={() => setEditandoPerfil(true)} 
-            className="w-full mt-8 bg-black text-white py-5 rounded-[25px] font-black uppercase italic shadow-[0_6px_0_0_#444] hover:bg-orange-600 active:shadow-none active:translate-y-1 transition-all"
-          >
-            Actualizar mis datos
-          </button>
-        </div>
-      </div>
-    ) : (
-      <FormularioRegistro 
-        datosIniciales={usuarioActual} 
-        onFinalizar={() => { refrescarTodo(); setEditandoPerfil(false); }} 
-      />
-    )}
-  </div>
-)}
-
- {/* VISTA MIEMBROS / GRUPETA (SIN +1) */}
-{vista === 'miembros' && esAdmin && (
-  <div className="animate-in fade-in duration-500">
-    <div className="mb-8">
-      <h1 className="text-4xl font-black italic uppercase leading-none text-blue-600">La Grupeta</h1>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">— Central de Inteligencia Zuricata</p>
-    </div>
-
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {amigos.map(amigo => (
-        <div key={amigo.id} className="bg-white p-5 rounded-[35px] border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4 relative overflow-hidden group">
-          
-          {/* Header del Miembro */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <img src={amigo.fotoPerfil || "/logo.png"} className="w-14 h-14 rounded-2xl border-2 border-black object-cover" />
-              <span className="absolute -bottom-2 -right-2 bg-black text-white text-[8px] font-black px-2 py-1 rounded-lg border border-white">
-                KM {amigo.rodadasCount * 45 || 0}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-black italic uppercase text-base leading-none truncate">{amigo.nombre}</p>
-              <p className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter mt-1">
-                {amigo.rodadasCount >= 50 ? '👑 Leyenda' : amigo.rodadasCount >= 25 ? '🦎 Senior' : '👶 Recluta'}
-              </p>
+        {vista === 'miembros' && esAdmin && (
+          <div className="animate-in fade-in duration-500">
+            <h1 className="text-4xl font-medium text-black tracking-tight mb-10">El team</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {amigos.map(amigo => (
+                <div key={amigo.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-4 mb-6">
+                    <img src={amigo.fotoPerfil || "/logo.png"} className="w-14 h-14 rounded-xl object-cover" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-black truncate">{amigo.nombre}</p>
+                      <p className="text-[9px] font-bold text-[#8CAACF] mt-1 uppercase">Rodadas: {amigo.rodadasCount || 0}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setUsuarioParaSOS(amigo)} className="bg-red-50 text-red-500 py-3 rounded-xl font-bold text-[10px] uppercase">SOS</button>
+                    <button onClick={async () => { if(confirm('¿Expulsar?')) { await deleteDoc(doc(db, "usuarios", amigo.id)); refrescarTodo(); } }} className="bg-gray-50 text-[#7E8285] py-3 rounded-xl font-bold text-[10px] uppercase">Baja</button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* PANEL DE ACCIONES ADMIN (SOLO SOS Y ELIMINAR) */}
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t-2 border-slate-50">
-            {/* BOTÓN SOS */}
-            <button 
-              onClick={() => setUsuarioParaSOS(amigo)} 
-              className="bg-red-600 text-white p-4 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(100,0,0,1)] active:shadow-none active:translate-y-1 transition-all flex items-center justify-center gap-2"
-              title="Ficha SOS"
-            >
-              <span className="text-lg">🚨</span>
-              <span className="text-[10px] uppercase italic">Ficha SOS</span>
-            </button>
-
-            {/* BOTÓN ELIMINAR */}
-            <button 
-              onClick={async () => {
-                if(confirm(`¿Expulsar a ${amigo.nombre} de la grupeta? No hay vuelta atrás.`)) {
-                   await deleteDoc(doc(db, "usuarios", amigo.id));
-                   refrescarTodo();
-                }
-              }} 
-              className="bg-slate-100 text-slate-400 p-4 rounded-2xl font-black shadow-[4px_4px_0px_0px_rgba(200,200,200,1)] hover:bg-black hover:text-white hover:shadow-black active:shadow-none active:translate-y-1 transition-all flex items-center justify-center gap-2"
-              title="Eliminar Miembro"
-            >
-              <span className="text-lg">🗑️</span>
-              <span className="text-[10px] uppercase italic">Expulsar</span>
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* RENDER DEL MODAL SOS */}
-    {usuarioParaSOS && (
-      <ModalEmergencia 
-        usuario={usuarioParaSOS} 
-        alCerrar={() => setUsuarioParaSOS(null)} 
-      />
-    )}
-  </div>
-)}
-
-        {vista === 'crear' && esAdmin && <FormularioEvento onEventoCreado={() => { refrescarTodo(); setVista('cartelera'); }} />}
+        {vista === 'crear' && esAdmin && <FormularioEvento onEventoCreado={() => { refrescarTodo(); navegarA('cartelera'); }} />}
+        {usuarioParaSOS && <ModalEmergencia usuario={usuarioParaSOS} alCerrar={() => setUsuarioParaSOS(null)} />}
       </div>
     </main>
   );

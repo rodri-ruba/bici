@@ -24,6 +24,18 @@ export default function FormularioEvento({ onEventoCreado }) {
     setEvento({ ...evento, [name]: value });
   };
 
+  // NUEVA FUNCIÓN PARA PROCESAR EL ARCHIVO
+  const manejarArchivo = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEvento({ ...evento, imagen: reader.result }); // Guarda el base64
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const crearEvento = async (e) => {
     e.preventDefault();
     if (cargando) return;
@@ -55,30 +67,32 @@ export default function FormularioEvento({ onEventoCreado }) {
     }
   };
 
+  const inputBase = "w-full bg-[#F3F3FC] border-b border-gray-200 p-3 outline-none focus:border-[#8CAACF] transition-colors font-bold text-sm text-black placeholder:text-gray-300";
+  const labelBase = "text-[10px] font-bold uppercase text-[#7E8285] tracking-[0.2em] ml-1 mb-1 block";
+
   return (
-    <form onSubmit={crearEvento} className="max-w-2xl mx-auto p-8 bg-white shadow-2xl rounded-[40px] mt-10 space-y-6 text-gray-800 border-4 border-black relative overflow-hidden">
+    <form onSubmit={crearEvento} className="max-w-2xl mx-auto p-8 bg-white shadow-xl shadow-black/5 rounded-[32px] mt-10 space-y-8 border border-gray-100 relative overflow-hidden font-['Roboto',sans-serif]">
       
       {cargando && (
-        <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center backdrop-blur-[2px]">
-          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 bg-white/60 z-20 flex items-center justify-center backdrop-blur-[1px]">
+          <div className="w-10 h-10 border-2 border-[#8CAACF] border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
-      <div className="flex justify-between items-center border-b-2 border-gray-100 pb-4">
+      <div className="flex justify-between items-center border-b border-gray-100 pb-6">
         <div>
-          <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none">Nuevo Sufrimiento</h2>
-          <p className="text-[9px] font-bold text-gray-400 tracking-widest uppercase mt-1">Configuración de Mood</p>
+          <h2 className="text-2xl font-bold tracking-tight uppercase leading-none text-black">Nuevo Sufrimiento</h2>
+          <p className="text-[9px] font-bold text-[#7E8285] tracking-[0.2em] uppercase mt-2">Configuración de Mood</p>
         </div>
         
-        {/* SELECTOR DE DISCIPLINA ACTUALIZADO */}
         <select 
           name="tipo" 
           value={evento.tipo} 
           onChange={manejarCambio}
-          className={`font-black py-2 px-4 rounded-2xl text-[10px] outline-none border-b-4 uppercase italic cursor-pointer transition-colors ${
-            evento.tipo === 'rodada' ? 'bg-orange-500 text-white border-orange-700' : 
-            evento.tipo === 'running' ? 'bg-sky-400 text-white border-sky-600' : 
-            'bg-purple-600 text-white border-purple-800'
+          className={`font-bold py-2.5 px-5 rounded-xl text-[10px] outline-none border-none uppercase tracking-widest cursor-pointer transition-all shadow-sm ${
+            evento.tipo === 'rodada' ? 'bg-[#8CAACF] text-white' : 
+            evento.tipo === 'running' ? 'bg-gray-800 text-white' : 
+            'bg-black text-white'
           }`}
         >
           <option value="rodada">🚲 Bici</option>
@@ -87,64 +101,69 @@ export default function FormularioEvento({ onEventoCreado }) {
         </select>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="group">
-          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Título del {evento.tipo === 'social' ? 'Chisme' : 'Sufrimiento'}</label>
-          <input type="text" name="titulo" value={evento.titulo} onChange={manejarCambio} placeholder="Ej: Ruta de los Muertos" className="w-full bg-gray-50 border-b-2 border-gray-200 p-3 rounded-t-xl outline-none focus:border-orange-500 transition-colors font-bold text-lg" required />
+          <label className={labelBase}>Título del {evento.tipo === 'social' ? 'Chisme' : 'Sufrimiento'}</label>
+          <input type="text" name="titulo" value={evento.titulo} onChange={manejarCambio} placeholder="Ej: Ruta de los Muertos" className={`${inputBase} text-lg rounded-t-xl`} required />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-50 p-3 rounded-2xl border-b-2 border-gray-100">
-            <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">📅 Fecha</label>
-            <input type="date" name="fecha" value={evento.fecha} onChange={manejarCambio} className="w-full bg-transparent outline-none font-bold text-sm" required />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col">
+            <label className={labelBase}>📅 Fecha</label>
+            <input type="date" name="fecha" value={evento.fecha} onChange={manejarCambio} className={`${inputBase} rounded-xl border-none`} required />
           </div>
-          <div className="bg-gray-50 p-3 rounded-2xl border-b-2 border-gray-100">
-            <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">🕒 Salida</label>
-            <input type="time" name="horaSalida" value={evento.horaSalida} onChange={manejarCambio} className="w-full bg-transparent outline-none font-bold text-sm" required />
+          <div className="flex flex-col">
+            <label className={labelBase}>🕒 Salida</label>
+            <input type="time" name="horaSalida" value={evento.horaSalida} onChange={manejarCambio} className={`${inputBase} rounded-xl border-none`} required />
           </div>
-          <div className="bg-gray-50 p-3 rounded-2xl border-b-2 border-gray-100">
-            <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">🏁 Regreso aprox</label>
-            <input type="time" name="horaLlegada" value={evento.horaLlegada} onChange={manejarCambio} className="w-full bg-transparent outline-none font-bold text-sm" />
+          <div className="flex flex-col">
+            <label className={labelBase}>🏁 Regreso aprox</label>
+            <input type="time" name="horaLlegada" value={evento.horaLlegada} onChange={manejarCambio} className={`${inputBase} rounded-xl border-none`} />
           </div>
         </div>
 
-        {/* DISTANCIA Y ALTIMETRIA (Ocultar solo si es Chisme/Social) */}
         {evento.tipo !== 'social' && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`p-3 rounded-2xl border-b-2 ${evento.tipo === 'running' ? 'bg-sky-50 border-sky-100' : 'bg-orange-50 border-orange-100'}`}>
-              <label className={`text-[9px] font-black uppercase block mb-1 ${evento.tipo === 'running' ? 'text-sky-500' : 'text-orange-500'}`}>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-[#F3F3FC] p-4 rounded-2xl border border-gray-100">
+              <label className="text-[9px] font-bold uppercase block mb-1 text-[#8CAACF] tracking-widest">
                 Distancia ({evento.tipo === 'running' ? 'Pasos/KM' : 'KM'})
               </label>
-              <input type="number" name="distancia" value={evento.distancia} onChange={manejarCambio} placeholder="0" className={`w-full bg-transparent outline-none font-black text-lg ${evento.tipo === 'running' ? 'text-sky-600' : 'text-orange-600'}`} />
+              <input type="number" name="distancia" value={evento.distancia} onChange={manejarCambio} placeholder="0" className="w-full bg-transparent outline-none font-bold text-xl text-black" />
             </div>
-            <div className={`p-3 rounded-2xl border-b-2 ${evento.tipo === 'running' ? 'bg-sky-50 border-sky-100' : 'bg-orange-50 border-orange-100'}`}>
-              <label className={`text-[9px] font-black uppercase block mb-1 ${evento.tipo === 'running' ? 'text-sky-500' : 'text-orange-500'}`}>Elevación (D+)</label>
-              <input type="number" name="altimetria" value={evento.altimetria} onChange={manejarCambio} placeholder="0" className={`w-full bg-transparent outline-none font-black text-lg ${evento.tipo === 'running' ? 'text-sky-600' : 'text-orange-600'}`} />
+            <div className="bg-[#F3F3FC] p-4 rounded-2xl border border-gray-100">
+              <label className="text-[9px] font-bold uppercase block mb-1 text-[#8CAACF] tracking-widest">Elevación (D+)</label>
+              <input type="number" name="altimetria" value={evento.altimetria} onChange={manejarCambio} placeholder="0" className="w-full bg-transparent outline-none font-bold text-xl text-black" />
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="text-[10px] font-black uppercase text-gray-400 ml-1">📍 ¿Dónde nos vemos?</label>
-            <input type="text" name="puntoEncuentro" value={evento.puntoEncuentro} onChange={manejarCambio} placeholder="Starbucks / Punto exacto" className="w-full border-b-2 border-gray-100 p-3 outline-none focus:border-orange-500 font-bold text-sm" required />
+            <label className={labelBase}>📍 ¿Dónde nos vemos?</label>
+            <input type="text" name="puntoEncuentro" value={evento.puntoEncuentro} onChange={manejarCambio} placeholder="Starbucks / Punto exacto" className={`${inputBase} rounded-xl border-none`} required />
           </div>
           <div>
-            <label className="text-[10px] font-black uppercase text-gray-400 ml-1">🖼️ Foto de la ruta (URL)</label>
-            <input type="text" name="imagen" value={evento.imagen} onChange={manejarCambio} placeholder="Link de imagen" className="w-full border-b-2 border-gray-100 p-3 outline-none focus:border-orange-500 font-bold text-sm" />
+            {/* INPUT DE IMAGEN MODIFICADO A TYPE FILE */}
+            <label className={labelBase}>🖼️ Foto de la ruta (Subir)</label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={manejarArchivo} 
+              className={`${inputBase} rounded-xl border-none file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-[#8CAACF] file:text-white cursor-pointer`} 
+            />
           </div>
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">📝 Briefing del {evento.tipo === 'social' ? 'Chisme' : 'Sufrimiento'}</label>
-          <textarea name="descripcion" value={evento.descripcion} onChange={manejarCambio} placeholder="Ritmo, si hay café al final, equipo necesario..." className="w-full bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none focus:border-orange-500 h-24 text-sm font-medium"></textarea>
+          <label className={labelBase}>📝 Briefing del {evento.tipo === 'social' ? 'Chisme' : 'Sufrimiento'}</label>
+          <textarea name="descripcion" value={evento.descripcion} onChange={manejarCambio} placeholder="Ritmo, si hay café al final, equipo necesario..." className="w-full bg-[#F3F3FC] p-4 rounded-2xl outline-none focus:border-[#8CAACF] border border-transparent transition-colors h-28 text-sm font-medium text-black placeholder:text-gray-300"></textarea>
         </div>
       </div>
 
       <button 
         type="submit" 
         disabled={cargando}
-        className="w-full bg-black text-white font-black py-5 rounded-[25px] hover:bg-orange-600 transition-all shadow-[0_8px_0_0_#444] active:shadow-none active:translate-y-1 uppercase italic tracking-widest text-lg"
+        className="w-full bg-black text-white font-bold py-5 rounded-2xl hover:bg-[#8CAACF] transition-all shadow-lg shadow-black/10 uppercase tracking-[0.2em] text-xs active:scale-[0.98]"
       >
         {cargando ? "Sincronizando..." : "LANZAR EVENTO 📢"}
       </button>
