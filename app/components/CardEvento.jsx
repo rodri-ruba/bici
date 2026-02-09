@@ -21,8 +21,13 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
   });
   const fechaFinal = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
 
-  const horaSalida = evento.hora || "07:00";
+  // AJUSTE: Usamos la propiedad correcta 'horaSalida' que viene del formulario
+  const horaSalida = evento.horaSalida || "07:00";
+  
+  // AJUSTE: Priorizamos la hora de llegada manual del formulario, si no existe, calculamos
   const horaRegreso = () => {
+    if (evento.horaLlegada) return evento.horaLlegada;
+    
     const [h, m] = horaSalida.split(':');
     const llegadaH = (parseInt(h) + (esRunning ? 2 : 4)) % 24;
     return `${llegadaH < 10 ? '0' + llegadaH : llegadaH}:${m}`;
@@ -32,7 +37,8 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
   const ascensosSociales = ["Elevación Espiritual"];
   const idx = evento.id ? evento.id.length % 5 : 0;
 
-  const nombreCompleto = `${usuarioActual.nombre} ${usuarioActual.apellidos}`;
+  // Validación de seguridad para usuarioActual
+  const nombreCompleto = usuarioActual ? `${usuarioActual.nombre} ${usuarioActual.apellidos}` : "";
   const yaEstaAnotado = evento.asistentes?.includes(nombreCompleto);
 
   const eliminarEvento = async () => {
@@ -47,7 +53,7 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
   };
 
   const manejarAsistencia = async (accion) => {
-    if (cargando || esPasado) return;
+    if (cargando || esPasado || !usuarioActual) return;
     setCargando(true);
     try {
       const eventoRef = doc(db, "eventos", evento.id);
@@ -77,7 +83,6 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
     <div className={`bg-white rounded-[32px] overflow-hidden border border-gray-100 flex flex-col transition-all relative font-['Roboto',sans-serif] shadow-sm
       ${esPasado ? 'opacity-75 grayscale-[0.8]' : 'hover:shadow-xl hover:shadow-black/5'}`}>
       
-      {/* BOTÓN ELIMINAR ADMIN */}
       {esAdmin && (
         <button 
           onClick={eliminarEvento}
@@ -94,7 +99,6 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
           alt={evento.titulo} 
         />
         
-        {/* BADGE TIPO EVENTO */}
         <div className={`absolute top-4 left-4 text-[9px] font-bold px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg z-10 
           ${esPasado ? 'bg-gray-500 text-white' : 
             esSocial ? 'bg-black text-white' : 
@@ -168,7 +172,7 @@ export default function CardEvento({ evento, usuarioActual, esAdmin }) {
               className={`w-full py-4 rounded-2xl font-bold uppercase tracking-[0.2em] transition-all text-[10px]
                 ${esPasado 
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
-                  : "bg-black text-white hover:bg-[#8CAACF] shadow-lg shadow-black/5 active:scale-[0.98]"
+                  : "bg-black text-white hover:bg-[#8CAACF] shadow-lg shadow-black/10 active:scale-[0.98]"
                 }`}
             >
               {cargando ? "Sincronizando..." : esPasado ? "Se acabó" : "¡Me anoto!"}

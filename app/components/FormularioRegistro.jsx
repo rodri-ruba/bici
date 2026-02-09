@@ -32,6 +32,8 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
     ultimaInscripcion: Date.now()
   });
 
+  const esEdicion = !!datosIniciales; // Ya lo tienes, lo usaremos abajo.
+
   useEffect(() => {
     if (datosIniciales) {
       setFormData({ ...datosIniciales });
@@ -77,7 +79,7 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
         alert("¡Perfil actualizado! ⚡");
         if (onFinalizar) onFinalizar();
       } else {
-        const q = query(collection(db, "usuarios"), where("usuario", "==", dataLimpia.usuario));
+        const q = query(collection(collection(db, "usuarios")), where("usuario", "==", dataLimpia.usuario));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
@@ -114,9 +116,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
     );
   }
 
-  const esEdicion = !!datosIniciales;
-
-  // Estilos comunes para inputs
   const inputBase = "bg-transparent border-b border-gray-200 outline-none p-2 font-medium text-black focus:border-[#8CAACF] transition-colors placeholder:text-gray-300 text-sm";
 
   return (
@@ -198,14 +197,31 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        disabled={cargando} 
-        className={`w-full text-white font-bold py-5 rounded-2xl transition-all shadow-lg uppercase tracking-[0.2em] text-xs 
-        ${cargando ? 'bg-[#7E8285] cursor-wait' : 'bg-black hover:bg-[#8CAACF] shadow-black/10 active:scale-[0.98]'}`}
-      >
-        {cargando ? 'SINCRONIZANDO...' : '¡UNIRME AL GRUPO! ☕️🚴‍♂️'}
-      </button>
+      <div className="flex flex-col gap-3">
+        <button 
+          type="submit" 
+          disabled={cargando} 
+          className={`w-full text-white font-bold py-5 rounded-2xl transition-all shadow-lg uppercase tracking-[0.2em] text-xs 
+          ${cargando ? 'bg-[#7E8285] cursor-wait' : 'bg-black hover:bg-[#8CAACF] shadow-black/10 active:scale-[0.98]'}`}
+        >
+          {cargando 
+            ? 'SINCRONIZANDO...' 
+            : esEdicion 
+              ? 'ACTUALIZAR MI EXPEDIENTE ⚡' 
+              : '¡UNIRME AL GRUPO! ☕️🚴‍♂️'}
+        </button>
+
+        {/* BOTÓN CANCELAR: Solo se muestra si estamos editando */}
+        {esEdicion && (
+          <button 
+            type="button"
+            onClick={onFinalizar}
+            className="w-full bg-gray-100 text-[#7E8285] font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-400 transition-all uppercase tracking-[0.2em] text-[10px]"
+          >
+            Cancelar Cambios
+          </button>
+        )}
+      </div>
     </form>
   );
 }

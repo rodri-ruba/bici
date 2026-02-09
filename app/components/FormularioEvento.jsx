@@ -42,8 +42,11 @@ export default function FormularioEvento({ onEventoCreado }) {
 
     setCargando(true);
     try {
+      // AJUSTE: Forzamos que las horas se envíen como strings literales
       const nuevoEvento = {
         ...evento,
+        horaSalida: String(evento.horaSalida),
+        horaLlegada: String(evento.horaLlegada),
         asistentes: [],
         creadoEn: serverTimestamp()
       };
