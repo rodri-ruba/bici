@@ -32,7 +32,7 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
     ultimaInscripcion: Date.now()
   });
 
-  const esEdicion = !!datosIniciales; // Ya lo tienes, lo usaremos abajo.
+  const esEdicion = !!datosIniciales;
 
   useEffect(() => {
     if (datosIniciales) {
@@ -79,7 +79,8 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
         alert("¡Perfil actualizado! ⚡");
         if (onFinalizar) onFinalizar();
       } else {
-        const q = query(collection(collection(db, "usuarios")), where("usuario", "==", dataLimpia.usuario));
+        // ✅ CORRECCIÓN: Se eliminó el "collection" duplicado que causaba el error en producción
+        const q = query(collection(db, "usuarios"), where("usuario", "==", dataLimpia.usuario));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
@@ -97,6 +98,7 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
       }
     } catch (error) {
       console.error("Error guardando ciclista:", error);
+      // ✅ Tip: En producción, este mensaje suele ser por falta de permisos en Firebase o el error de sintaxis corregido arriba
       alert("Error al procesar el registro. Revisa tu conexión.");
     } finally {
       setCargando(false);
@@ -121,7 +123,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
   return (
     <form onSubmit={manejarEnvio} className="p-6 space-y-8 bg-white rounded-[32px] font-['Roboto',sans-serif] shadow-xl shadow-black/5 border border-gray-100">
       
-      {/* SECCIÓN FOTO */}
       <div className="flex flex-col items-center space-y-4">
         <div className="relative group cursor-pointer" onClick={() => fileInputRef.current.click()}>
           <div className="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white shadow-2xl transition-transform group-hover:scale-105 duration-300">
@@ -138,7 +139,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
       </div>
 
       <div className="space-y-6">
-        {/* CREDENCIALES */}
         <div className="bg-[#F3F3FC] p-6 rounded-[24px] space-y-4">
           <div className="text-[10px] font-bold text-[#8CAACF] uppercase tracking-[0.2em]">🔑 Acceso</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,7 +147,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
           </div>
         </div>
 
-        {/* DATOS PERSONALES */}
         <div className="bg-white p-2 space-y-5">
           <div className="text-[10px] font-bold text-[#7E8285] uppercase tracking-[0.2em] px-4">👤 Perfil Ciclista</div>
           <div className="grid grid-cols-2 gap-4 px-4">
@@ -163,7 +162,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
           </div>
         </div>
 
-        {/* SOS */}
         <div className="bg-red-50/50 p-6 rounded-[24px] border border-red-50 space-y-4">
           <p className="text-[10px] font-bold text-red-400 uppercase tracking-[0.2em]">🚑 Emergencias</p>
           <input type="text" name="hospitalPreferencia" placeholder="Hospital de preferencia" value={formData.hospitalPreferencia} onChange={manejarCambio} required className={`${inputBase} w-full !border-red-100 focus:!border-red-300`} />
@@ -181,7 +179,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
           </div>
         </div>
 
-        {/* MECÁNICA */}
         <div className="bg-black p-6 rounded-[24px] space-y-4 shadow-lg shadow-black/10">
           <p className="text-[10px] font-bold text-[#8CAACF] uppercase tracking-[0.2em]">⚙️ La Máquina</p>
           <div className="grid grid-cols-2 gap-6">
@@ -211,7 +208,6 @@ export default function FormularioRegistro({ datosIniciales, alGuardar, onFinali
               : '¡UNIRME AL GRUPO! ☕️🚴‍♂️'}
         </button>
 
-        {/* BOTÓN CANCELAR: Solo se muestra si estamos editando */}
         {esEdicion && (
           <button 
             type="button"
